@@ -39,6 +39,12 @@ public class FotoRecognition extends Activity {
         ((Button) findViewById(R.id.take_picture)).setOnClickListener(btnClick);
     }
 
+    private void openCamera() {
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+
+        startActivityForResult(intent, TAKE_PICTURE_CODE);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -46,12 +52,6 @@ public class FotoRecognition extends Activity {
         if (TAKE_PICTURE_CODE == requestCode) {
             processCameraImage(data);
         }
-    }
-
-    private void openCamera() {
-        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-
-        startActivityForResult(intent, TAKE_PICTURE_CODE);
     }
 
     private void processCameraImage(Intent intent) {
@@ -74,7 +74,10 @@ public class FotoRecognition extends Activity {
             FaceDetector detector = new FaceDetector(width, height, FotoRecognition.MAX_FACES);
             Face[] faces = new Face[FotoRecognition.MAX_FACES];
 
+            //convert bitmap to bitmap with a parameter RGB_565 another person will not be recognized ,
+            // why is it only understands the format.
             Bitmap bitmap565 = Bitmap.createBitmap(width, height, Config.RGB_565);
+
             Paint ditherPaint = new Paint();
             Paint drawPaint = new Paint();
 
@@ -113,7 +116,7 @@ public class FotoRecognition extends Activity {
                     Toast.makeText(getApplicationContext(), "Good Face!", Toast.LENGTH_SHORT).show();
 
                 }
-
+                // if don't found face, you will see Toast
             } else if (facesFound == 0) {
                 Toast.makeText(getApplicationContext(), "Try again!", Toast.LENGTH_SHORT).show();
             }
@@ -122,7 +125,6 @@ public class FotoRecognition extends Activity {
 
             try {
                 FileOutputStream fos = new FileOutputStream(filepath);
-
                 bitmap565.compress(CompressFormat.JPEG, 100, fos);
 
                 fos.flush();
@@ -153,8 +155,9 @@ public class FotoRecognition extends Activity {
         }
     };
 
+    // back to the first activity, if you would like Try again
     public void back(View view) {
-        Intent intent = new Intent(getApplicationContext(),FotoRecognition.class);
+        Intent intent = new Intent(getApplicationContext(), FotoRecognition.class);
         startActivity(intent);
     }
 }
