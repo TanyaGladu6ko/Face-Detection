@@ -71,6 +71,7 @@ public class FotoRecognition extends Activity {
             int width = cameraBitmap.getWidth();
             int height = cameraBitmap.getHeight();
 
+            // Parameter in MAX_FACES pass the maximum number of people who expect to find
             FaceDetector detector = new FaceDetector(width, height, FotoRecognition.MAX_FACES);
             Face[] faces = new Face[FotoRecognition.MAX_FACES];
 
