@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Foto</string>
+    <string name="take_picture">Take Foto</string>
+    <string name="app_info">Please, Press button "Take foto", Recognize your face like Angelina Jolly and Bred Pitt! </string>
+    <string name="detect_face">Your Face</string>
+    <string name="back">Back</string>
+</resources>
