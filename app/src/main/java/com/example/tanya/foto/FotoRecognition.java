@@ -26,9 +26,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class FotoRecognition extends Activity {
+    // it is request code for action take picture
     private static final int TAKE_PICTURE_CODE = 100;
+    // Parameter in MAX_FACES pass the maximum number of people who expect to find
     private static final int MAX_FACES = 5;
-
+    // photo save in cameraBitmap
     private Bitmap cameraBitmap = null;
 
     @Override
@@ -36,42 +38,44 @@ public class FotoRecognition extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_the_first);
 
-        ((Button) findViewById(R.id.take_picture)).setOnClickListener(btnClick);
+        Button takePicture = (Button) findViewById(R.id.take_picture);
+        takePicture.setOnClickListener(btnClick);
     }
 
+    // This method send Intent to Android Service and open Camera
     private void openCamera() {
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-
         startActivityForResult(intent, TAKE_PICTURE_CODE);
     }
 
+    // this method processed requestCode
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
 
-        if (TAKE_PICTURE_CODE == requestCode) {
-            processCameraImage(data);
+        if (TAKE_PICTURE_CODE == requestCode && resultCode == RESULT_OK) {
+            processCameraImage(intent);
         }
     }
 
     private void processCameraImage(Intent intent) {
+        // open the next layout
         setContentView(R.layout.detectlayout);
+        // attach listener to button, which we use for detect face on our photo
+        Button detectFace = (Button) findViewById(R.id.detect_face);
+        detectFace.setOnClickListener(btnClick);
 
-        ((Button) findViewById(R.id.detect_face)).setOnClickListener(btnClick);
-
-        ImageView imageView = (ImageView) findViewById(R.id.image_view);
-
+        // get and set bitmap in image view
         cameraBitmap = (Bitmap) intent.getExtras().get("data");
-
-        imageView.setImageBitmap(cameraBitmap);
+        ((ImageView) findViewById(R.id.image_view)).setImageBitmap(cameraBitmap);
     }
 
     private void detectFaces() {
-        if (null != cameraBitmap) {
+        if (cameraBitmap != null) {
             int width = cameraBitmap.getWidth();
             int height = cameraBitmap.getHeight();
 
-            // Parameter in MAX_FACES pass the maximum number of people who expect to find
+        // Create instance of class FaceDector, an
             FaceDetector detector = new FaceDetector(width, height, FotoRecognition.MAX_FACES);
             Face[] faces = new Face[FotoRecognition.MAX_FACES];
 
@@ -79,36 +83,34 @@ public class FotoRecognition extends Activity {
             // why is it only understands the format.
             Bitmap bitmap565 = Bitmap.createBitmap(width, height, Config.RGB_565);
 
+            // tool for painting
             Paint ditherPaint = new Paint();
             Paint drawPaint = new Paint();
 
+            // set params
             ditherPaint.setDither(true);
             drawPaint.setColor(Color.RED);
             drawPaint.setStyle(Paint.Style.STROKE);
             drawPaint.setStrokeWidth(2);
 
+            // create canvas and draw our image
             Canvas canvas = new Canvas();
             canvas.setBitmap(bitmap565);
             canvas.drawBitmap(cameraBitmap, 0, 0, ditherPaint);
 
+            //looking for the faces in the photo, get an array of faces .
             int facesFound = detector.findFaces(bitmap565, faces);
+            //midPoint - coordinate between the eyes
             PointF midPoint = new PointF();
             float eyeDistance = 0.0f;
-            float confidence = 0.0f;
-
-            Log.i("Detector Face", "Faces found: " + facesFound);
 
             if (facesFound > 0) {
                 for (int index = 0; index < facesFound; ++index) {
+                    //get distance between eyes
                     faces[index].getMidPoint(midPoint);
                     eyeDistance = faces[index].eyesDistance();
-                    confidence = faces[index].confidence();
 
-                    Log.i("FaceDetector",
-                            "Confidence: " + confidence +
-                                    ", Eye distance: " + eyeDistance +
-                                    ", Mid Point: (" + midPoint.x + ", " + midPoint.y + ")");
-
+                    // this method draw rect around face
                     canvas.drawRect((int) midPoint.x - eyeDistance,
                             (int) midPoint.y - eyeDistance,
                             (int) midPoint.x + eyeDistance,
@@ -122,26 +124,34 @@ public class FotoRecognition extends Activity {
                 Toast.makeText(getApplicationContext(), "Try again!", Toast.LENGTH_SHORT).show();
             }
 
-            String filepath = Environment.getExternalStorageDirectory() + "/facedetect" + System.currentTimeMillis() + ".jpg";
 
+            // save foto to SD card
+            String filepath = Environment.getExternalStorageDirectory() + "/facedetect" + System.currentTimeMillis() + ".jpg";
+            FileOutputStream fos = null;
             try {
-                FileOutputStream fos = new FileOutputStream(filepath);
+                fos = new FileOutputStream(filepath);
                 bitmap565.compress(CompressFormat.JPEG, 100, fos);
 
                 fos.flush();
-                fos.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
+            // set result image
             ImageView imageView = (ImageView) findViewById(R.id.image_view);
-
             imageView.setImageBitmap(bitmap565);
         }
     }
 
+    // it is listener for buttons
     private View.OnClickListener btnClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
